@@ -1,0 +1,17 @@
+{
+    "compilerOptions": {
+        "module": "ESNext",
+        "target": "ESNext",
+        "jsx": "preserve",
+        "strictFunctionTypes": true,
+        "sourceMap": true,
+        "moduleResolution": "Node",
+        "esModuleInterop": true,
+        "experimentalDecorators": true,
+        "emitDecoratorMetadata": true /* Enables experimental support for emitting type metadata for decorators. */
+    },
+    "exclude": [
+        "node_modules",
+        "**/node_modules/*"
+    ]
+}
