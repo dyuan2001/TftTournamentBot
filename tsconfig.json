@@ -9,7 +9,10 @@
         "esModuleInterop": true,
         "experimentalDecorators": true,
         "emitDecoratorMetadata": true, /* Enables experimental support for emitting type metadata for decorators. */
-        "baseUrl": "."
+        "baseUrl": ".",
+        "paths": {
+            "*": ["./types/*"]
+        }
     },
     "exclude": [
         "node_modules",

@@ -17,10 +17,11 @@ export class RiotAPI {
 
         const data = await response.json();
         if (response.ok) {
+            console.log(`Successfully fetched data from ${url}`);
             return data;
         } else {
             const error = JSON.stringify(data);
-            console.log(error);
+            console.log(`Error in Riot fetchGeneric: ${error}`);
             return Promise.reject(error);
         }
     }
@@ -42,9 +43,13 @@ export class RiotAPI {
      * @param summonerId Encrypted summoner id.
      * @returns Promise for object containing league information.
      */
-     static async fetchLeague(summonerId: string): Promise<leagueItem> { // need to specify custom return type for JSON obj
+    static async fetchLeague(summonerId: string): Promise<leagueItem> { // need to specify custom return type for JSON obj
         // Check if DB has encrypted summoner id or not. NOTE: should include a "name changed" function to account for stuff.
-        const item: Array<leagueItem> = await this.fetchGeneric(`https://na1.api.riotgames.com/tft/league/v1/entries/by-summoner/${summonerId}`);
-        return item[0];
+        const itemArray: Array<leagueItem> = await this.fetchGeneric(`https://na1.api.riotgames.com/tft/league/v1/entries/by-summoner/${summonerId}`);
+        for (const item of itemArray) {
+            if (item.queueType == 'RANKED_TFT') {
+                return item;
+            }
+        }
     }
 }

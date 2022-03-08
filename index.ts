@@ -3,6 +3,7 @@ import 'dotenv/config';
 import { Intents, Interaction, Message } from "discord.js";
 import { Client } from "discordx";
 import { dirname, importx } from "@discordx/importer";
+import AWS from "aws-sdk";
 
 export const client = new Client({
   simpleCommand: {
@@ -63,5 +64,11 @@ async function run() {
   }
   await client.login(process.env.BOT_TOKEN); // provide your bot token
 }
+
+AWS.config.update({
+  region: process.env.AWS_DEFAULT_REGION,
+  accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+  secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY
+})
 
 run();
