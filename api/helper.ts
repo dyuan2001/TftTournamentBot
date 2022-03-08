@@ -1,9 +1,11 @@
 import { RiotAPI } from "./riot.js";
 import { DatabaseAPI } from "./db.js";
 import { Translate } from "./translate.js";
+import { User } from "discord.js";
+import { tournamentErrorType } from "../types/enums.js";
 
 export class Helper {
-    static readonly tournamentExpiryTime: number = 2419200;
+    static readonly tournamentExpiryTime: number = 2629800000;
 
     /**
      * Helper function to get a summonerDB from a summoner name.
@@ -42,5 +44,22 @@ export class Helper {
             const tournamentNew = await DatabaseAPI.putTournament(tournament);
             return tournamentNew;
         }
+    }
+
+    /**
+     * Helper function to check if a user is an admin of a tournament.
+     * @param user User to check for admin privileges.
+     * @param tournament tournamentDB of relevant tournament.
+     * @returns True if user is an admin, False if not.
+     */
+    static async checkAdmin(user: User, tournament?: tournamentDB, tournamentId?: string): Promise<tournamentDB> {
+        if (!tournament) {
+            tournament = await DatabaseAPI.getTournament(tournamentId);
+            if (!tournament) throw new Error(tournamentErrorType.NO_TOURNAMENT);
+        }
+        if (tournament.admins.indexOf(user.id) < 0) {
+            throw new Error(tournamentErrorType.NOT_ADMIN);
+        }
+        return tournament;
     }
 }

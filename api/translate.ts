@@ -1,3 +1,6 @@
+import { CommandInteraction, User } from "discord.js";
+import { tournamentErrorType, updateType } from "../types/enums.js";
+
 export class Translate {
     /**
      * Translates Riot API objects into summonerDB object.
@@ -61,15 +64,17 @@ export class Translate {
         let expressionAttributeValues = {};
         for (let i = 0; i < updateExpressionArray.length; i++) {
             const currExpression = updateExpressionArray[i];
-            if (currExpression.type === 'set') {
-                updateExpression += `SET #${currExpression.variable}${i} = :${currExpression.variable}${i} `;
-            } else if (currExpression.type === 'appendlist') {
-                updateExpression += `SET #${currExpression.variable}${i} = list_append(#${currExpression.variable}${i}, :${currExpression.variable}${i}) `;
-            } else if (currExpression.type === 'appendmap') {
+            if (currExpression.type === updateType.SET) {
+                updateExpression += `SET ${currExpression.variable} = :${currExpression.variable}${i} `;
+                expressionAttributeValues[`:${currExpression.variable}${i}`] = currExpression.value; // override with array
+            } else if (currExpression.type === updateType.ADDLIST) {
+                updateExpression += `SET ${currExpression.variable} = list_append(${currExpression.variable}, :${currExpression.variable}${i}) `;
+                expressionAttributeValues[`:${currExpression.variable}${i}`] = [currExpression.value]; // override with array
+            } else if (currExpression.type === updateType.ADDMAP) {
                 updateExpression += `SET #${currExpression.variable}${i}.${currExpression.key} = :${currExpression.variable}${i}`;
+            } else if (currExpression.type === updateType.REMOVELIST) {
+                updateExpression +=  `REMOVE ${currExpression.variable}[${currExpression.value}] `;
             }
-            expressionAttributeNames[`#${currExpression.variable}${i}`] = currExpression.variable;
-            expressionAttributeValues[`:${currExpression.variable}${i}`] = currExpression.value;
         }
 
         let retObject: updateFormat = {
@@ -78,5 +83,42 @@ export class Translate {
             expressionAttributeValues
         }
         return retObject;
+    }
+
+    /**
+     * Translates an error message to a interaction reply.
+     * @param err Error thrown.
+     * @param name Tournament id.
+     * @param user User the command is for.
+     * @param interaction Discord.js CommandInteraction of command.
+     * @param defaultMessage Default message for non-specified errors.
+     */
+    static async tournamentErrorTypeToInteractionReply(
+        err: Error,
+        name: string, 
+        user: User, 
+        interaction: CommandInteraction, 
+        defaultMessage: string
+    ): Promise<void> {
+        switch (err.message) {
+            case tournamentErrorType.DUPLICATE_TOURNAMENT:
+                await await interaction.reply(`Duplicate ID error: Tournament with ID **${name}** already exists. Please choose a different name.`); break;
+            case tournamentErrorType.UPDATE_CONDITION:
+            case tournamentErrorType.NO_TOURNAMENT:
+                await interaction.reply(`There is no tournament with id **${name}**. Please check the name again (case-sensitive).`); break;
+            case tournamentErrorType.NO_SUMMONER_NAME:
+                await interaction.reply(`has not set a summoner name. Please set a summoner name with \`user set <summoner_name>\`.`);
+                await interaction.editReply(`<@${user.id}> has not set a summoner name. Please set a summoner name with \`user set <summoner_name>\`.`); break;
+            case tournamentErrorType.ALREADY_REGISTERED:
+                await interaction.reply(`is already registered for tournament **${name}**.`);
+                await interaction.editReply(`<@${user.id}> is already registered for tournament **${name}**.`); break;
+            case tournamentErrorType.NOT_REGISTERED:
+                await interaction.reply(`is already not registered for tournament **${name}**.`);
+                await interaction.editReply(`<@${user.id}> is already not registered for tournament **${name}**.`); break;
+            case tournamentErrorType.NOT_ADMIN:
+                await interaction.reply(`You do not have permission to run this command (must be an admin).`);
+            default:
+                await interaction.reply(defaultMessage);
+        }
     }
 }

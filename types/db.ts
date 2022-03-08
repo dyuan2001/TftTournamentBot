@@ -19,7 +19,7 @@ type summonerDB = {
 }
 
 type updateExpression = {
-    type: string,
+    type: number,
     variable: string,
     key?: string,
     value: string
@@ -39,8 +39,8 @@ type participantInfo = { // mapped to Discord Snowflake
 
 type lobbyInfo = { // mapped to lobby id
     done: boolean
-    coordinators: string[] // list of Discord Snowflakes
-    participants: string[] // list of Discord Snowflakes
+    coordinators: Set<string> // list of Discord Snowflakes
+    participants: Set<string> // list of Discord Snowflakes
     pointsMatrix?: number[]
 }
 
@@ -51,5 +51,5 @@ type tournamentDB = {
     admins: string[]
     participants?: string[]
     participantMap?: Map<string, participantInfo>
-    lobbies?: Map<string, lobbyInfo[]>
+    lobbies?: Map<string, lobbyInfo>
 }

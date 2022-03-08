@@ -1,5 +1,4 @@
 import AWS, { AWSError } from 'aws-sdk';
-import { Snowflake } from 'discord.js';
 import { Translate } from './translate.js';
 
 export class DatabaseAPI {
@@ -36,19 +35,21 @@ export class DatabaseAPI {
      */
     static async update(pk: string, table: string, updateExpressionArray: updateExpression[]): Promise<any> {
         const updateFormatObject = Translate.updateExpressionArrayToUpdateFormat(updateExpressionArray);
-        const params = {
+        let params = {
             TableName: table,
             Key: { id: pk },
             UpdateExpression: updateFormatObject.updateExpression,
-            ConditionExpression: 'attribute_exists(id)',
-            ExpressionAttributeNames: updateFormatObject.expressionAttributeNames,
-            ExpressionAttributeValues: updateFormatObject.expressionAttributeValues
+            ConditionExpression: 'attribute_exists(id)'
         };
-        
+        if (Object.keys(updateFormatObject.expressionAttributeNames).length > 0)
+            params['ExpressionAttributeNames'] = updateFormatObject.expressionAttributeNames;
+        if (Object.keys(updateFormatObject.expressionAttributeValues).length > 0)
+            params['ExpressionAttributeValues'] = updateFormatObject.expressionAttributeValues;
+
         console.log(`Updating object ${pk} in table ${table} with updateExpression: ${updateFormatObject.updateExpression}`);
         try {
-            const data = await this.docClient.update(params).promise();
-            return data;
+            await this.docClient.update(params).promise();
+            return Promise.resolve();
         } catch (err: AWSError | any) {
             const error = err.message;
             console.log(`Error in update: ${error}`);
@@ -106,6 +107,17 @@ export class DatabaseAPI {
     static async putTournament(tournament: tournamentDB): Promise<tournamentDB> {
         const item: tournamentDB = await this.put(tournament, 'tournament-table');
         return item;
+    }
+
+    /**
+     * Update tournament with specified update expressions in table tournament-table.
+     * @param id tournamentDB objecto to be updated.
+     * @param updateExpressionArray List of operations to be done.
+     * @returns Promise that indicates success or failure.
+     */
+    static async updateTournament(id: string, updateExpressionArray: updateExpression[]): Promise<any> {
+        const result: Promise<any> = await this.update(id, 'tournament-table', updateExpressionArray);
+        return result;
     }
 
     /**

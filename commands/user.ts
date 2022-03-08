@@ -24,7 +24,7 @@ export class UserCommands {
                 username: interaction.user.username,
                 summonerId: summonerInfo.id
             });
-            await interaction.reply(`Your summoner has been successfully set to ${summoner}!`);
+            await interaction.reply(`Your summoner has been successfully set to **${summoner}**!`);
         } catch (err) {
             console.log(`Error in user set: ${err}`);
             await interaction.reply(`There was an error setting your summoner. Please try again later.`);
