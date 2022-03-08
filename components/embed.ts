@@ -30,4 +30,25 @@ export class Embed {
 
         return embed;
     }
+
+    static tournamentInfoEmbed(tournamentInfo: tournamentDB): MessageEmbed {
+        let adminsString = '';
+        for (const admin of tournamentInfo.admins) {
+            adminsString += `<@${admin}>\n`;
+        }
+        adminsString = adminsString.slice(0, -1);
+
+        let embed = new MessageEmbed()
+            .setTitle(`${tournamentInfo.id} Info`)
+            .setDescription(`${tournamentInfo.description}`)
+            .setAuthor({ name: 'TFT Bot', iconURL: `${client.user.avatarURL()}` })
+            .addFields(
+                { name: 'Participants', value: `${tournamentInfo.participants.length}` },
+                { name: 'Admins', value: `${adminsString}` }
+            )
+            .setTimestamp()
+            .setFooter({ text: `Built by @dyuan2001 on GitHub.`, iconURL: 'attachment://esportsLogo.png' });
+        
+        return embed;
+    }
 }

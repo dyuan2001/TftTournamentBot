@@ -115,7 +115,13 @@ export class Translate {
             case tournamentErrorType.NOT_REGISTERED:
                 await interaction.reply(`is already not registered for tournament **${name}**.`);
                 await interaction.editReply(`<@${user.id}> is already not registered for tournament **${name}**.`); break;
+            case tournamentErrorType.ALREADY_ADMIN:
+                await interaction.reply(`is already an admin for tournament **${name}**.`);
+                await interaction.editReply(`<@${user.id}> is already an admin for tournament **${name}**.`); break;
             case tournamentErrorType.NOT_ADMIN:
+                await interaction.reply(`is already not an admin for tournament **${name}**.`);
+                await interaction.editReply(`<@${user.id}> is already not an admin for tournament **${name}**.`); break;
+            case tournamentErrorType.NO_ADMIN_PERMISSION:
                 await interaction.reply(`You do not have permission to run this command (must be an admin).`);
             default:
                 await interaction.reply(defaultMessage);

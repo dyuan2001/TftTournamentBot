@@ -11,6 +11,8 @@ export const enum tournamentErrorType {
     NO_TOURNAMENT = 'no tournament',
     ALREADY_REGISTERED = 'already registered',
     NOT_REGISTERED = 'not registered',
+    ALREADY_ADMIN = 'already admin',
     NOT_ADMIN = 'not admin',
+    NO_ADMIN_PERMISSION = 'no admin permission',
     UPDATE_CONDITION = 'The conditional request failed.'
 }

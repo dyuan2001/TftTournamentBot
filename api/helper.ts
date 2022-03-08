@@ -58,7 +58,7 @@ export class Helper {
             if (!tournament) throw new Error(tournamentErrorType.NO_TOURNAMENT);
         }
         if (tournament.admins.indexOf(user.id) < 0) {
-            throw new Error(tournamentErrorType.NOT_ADMIN);
+            throw new Error(tournamentErrorType.NO_ADMIN_PERMISSION);
         }
         return tournament;
     }
