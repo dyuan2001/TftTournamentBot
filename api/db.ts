@@ -1,5 +1,6 @@
 import AWS, { AWSError } from 'aws-sdk';
 import { Snowflake } from 'discord.js';
+import { Translate } from './translate.js';
 
 export class DatabaseAPI {
     static readonly docClient = new AWS.DynamoDB.DocumentClient();
@@ -22,6 +23,35 @@ export class DatabaseAPI {
         } catch (err: AWSError | any) {
             const error = err.message;
             console.log(`Error in put: ${error}`);
+            return Promise.reject(error);
+        }
+    }
+
+    /**
+     * Generic update helper function. Will only update if object with ID exists.
+     * @param pk Primary key for lookup.
+     * @param table Table for update function.
+     * @param updateExpressionArray List of updateExpressions to be done.
+     * @returns Promise for success or failure.
+     */
+    static async update(pk: string, table: string, updateExpressionArray: updateExpression[]): Promise<any> {
+        const updateFormatObject = Translate.updateExpressionArrayToUpdateFormat(updateExpressionArray);
+        const params = {
+            TableName: table,
+            Key: { id: pk },
+            UpdateExpression: updateFormatObject.updateExpression,
+            ConditionExpression: 'attribute_exists(id)',
+            ExpressionAttributeNames: updateFormatObject.expressionAttributeNames,
+            ExpressionAttributeValues: updateFormatObject.expressionAttributeValues
+        };
+        
+        console.log(`Updating object ${pk} in table ${table} with updateExpression: ${updateFormatObject.updateExpression}`);
+        try {
+            const data = await this.docClient.update(params).promise();
+            return data;
+        } catch (err: AWSError | any) {
+            const error = err.message;
+            console.log(`Error in update: ${error}`);
             return Promise.reject(error);
         }
     }
@@ -69,6 +99,16 @@ export class DatabaseAPI {
     }
 
     /**
+     * Put tournament into table tournament-table.
+     * @param tournament tournamentDB object to be put.
+     * @returns Promise for tournamentDB object defined by the parameters.
+     */
+    static async putTournament(tournament: tournamentDB): Promise<tournamentDB> {
+        const item: tournamentDB = await this.put(tournament, 'tournament-table');
+        return item;
+    }
+
+    /**
      * Get user info from table discord-user-table.
      * @param id Discord Snowflake.
      * @returns Promise for userDB object matching id.
@@ -85,6 +125,16 @@ export class DatabaseAPI {
      */
     static async getSummoner(id: string): Promise<summonerDB> {
         const item: summonerDB = await this.get(id, 'summoner-table');
+        return item;
+    }
+
+    /**
+     * Get tournament from table tournament-table.
+     * @param id Unique tournament id.
+     * @returns Promise for tournamentDB object matching id.
+     */
+    static async getTournament(id: string): Promise<tournamentDB> {
+        const item: tournamentDB = await this.get(id, 'tournament-table');
         return item;
     }
 }

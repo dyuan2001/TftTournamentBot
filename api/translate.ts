@@ -49,4 +49,34 @@ export class Translate {
         }
         return rank;
     }
+
+    /**
+     * Translates a list of updateExpressions into the DocumentClient update format.
+     * @param updateExpressionArray List of updateExpressions for one object.
+     * @returns updateFormat containing updateExpression, expressionAttributeNames, and expressionAttributeValues.
+     */
+    static updateExpressionArrayToUpdateFormat(updateExpressionArray: updateExpression[]): updateFormat {
+        let updateExpression: string = '';
+        let expressionAttributeNames = {};
+        let expressionAttributeValues = {};
+        for (let i = 0; i < updateExpressionArray.length; i++) {
+            const currExpression = updateExpressionArray[i];
+            if (currExpression.type === 'set') {
+                updateExpression += `SET #${currExpression.variable}${i} = :${currExpression.variable}${i} `;
+            } else if (currExpression.type === 'appendlist') {
+                updateExpression += `SET #${currExpression.variable}${i} = list_append(#${currExpression.variable}${i}, :${currExpression.variable}${i}) `;
+            } else if (currExpression.type === 'appendmap') {
+                updateExpression += `SET #${currExpression.variable}${i}.${currExpression.key} = :${currExpression.variable}${i}`;
+            }
+            expressionAttributeNames[`#${currExpression.variable}${i}`] = currExpression.variable;
+            expressionAttributeValues[`:${currExpression.variable}${i}`] = currExpression.value;
+        }
+
+        let retObject: updateFormat = {
+            updateExpression,
+            expressionAttributeNames,
+            expressionAttributeValues
+        }
+        return retObject;
+    }
 }
