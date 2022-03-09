@@ -22,7 +22,7 @@ export class Embed {
             .addFields(
                 { name: 'Rank', value: `${Translate.readableRank(summonerInDatabase, true)}` },
                 { name: 'Wins', value: `${summonerInDatabase.wins}`, inline: true },
-                { name: 'Losses', value: `${summonerInDatabase.losses}`, inline: true },
+                { name: 'Games', value: `${summonerInDatabase.losses + summonerInDatabase.wins}`, inline: true },
                 { name: 'Winrate', value: `${winrate}%`, inline: true },
             )
             .setTimestamp()

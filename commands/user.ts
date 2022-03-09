@@ -24,7 +24,7 @@ export class UserCommands {
                 username: interaction.user.username,
                 summonerId: summonerInfo.id
             });
-            await interaction.reply(`Your summoner has been successfully set to **${summoner}**!`);
+            await interaction.reply(`Your summoner has been successfully set to **${summonerInfo.summonerName}**!`);
         } catch (err) {
             console.log(`Error in user set: ${err}`);
             await interaction.reply(`There was an error setting your summoner. Please try again later.`);
@@ -81,9 +81,10 @@ export class UserCommands {
                 await interaction.reply(`There was an error getting 's info. This user has not set a summoner yet.`);
                 await interaction.editReply(`There was an error getting <@${user.id}>'s info. This user has not set a summoner yet.`);
             } else {
+                await interaction.deferReply();
                 const summonerInDatabase = await DatabaseAPI.getSummoner(userInfo.summonerId);
                 const embed = Embed.userInfoEmbed(user, summonerInDatabase);
-                await interaction.reply({ embeds: [embed], files:['./assets/esportsLogo.png'] });
+                await interaction.editReply({ embeds: [embed], files:['./assets/esportsLogo.png'] });
             }
         } catch (err) {
             console.log(`Error in user info: ${err}`);

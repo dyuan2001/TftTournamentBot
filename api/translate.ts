@@ -1,4 +1,4 @@
-import { CommandInteraction, User } from "discord.js";
+import { ButtonInteraction, CommandInteraction, User } from "discord.js";
 import { tournamentErrorType, updateType } from "../types/enums.js";
 
 export class Translate {
@@ -97,7 +97,7 @@ export class Translate {
         err: Error,
         name: string, 
         user: User, 
-        interaction: CommandInteraction, 
+        interaction: CommandInteraction | ButtonInteraction, 
         defaultMessage: string
     ): Promise<void> {
         switch (err.message) {

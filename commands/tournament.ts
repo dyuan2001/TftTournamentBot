@@ -1,10 +1,11 @@
 import { Helper } from "../api/helper.js";
-import { CommandInteraction, User } from "discord.js";
-import { Discord, Slash, SlashGroup, SlashOption } from "discordx";
+import { ButtonInteraction, CommandInteraction, Interaction, MessageActionRow, User } from "discord.js";
+import { ButtonComponent, Discord, Slash, SlashGroup, SlashOption } from "discordx";
 import { DatabaseAPI } from "../api/db.js";
 import { tournamentErrorType, updateType } from "../types/enums.js";
 import { Translate } from "../api/translate.js";
 import { Embed } from "../components/embed.js";
+import { Button } from "../components/button.js";
 
 @Discord()
 @SlashGroup("tournament", "Tournament creation, registration, and other commands.")
@@ -82,6 +83,8 @@ export class TournamentCommands {
     async info(
         @SlashOption("name", { description: "Tournament name." })
         name: string,
+        @SlashOption("registration", { description: "Enables registration buttons.", required: false })
+        registration: boolean,
         interaction: CommandInteraction
     ) {
         console.log(`COMMAND: Getting info of tournament ${name}...`);
@@ -90,7 +93,14 @@ export class TournamentCommands {
             if (!tournamentInfo) throw new Error(tournamentErrorType.NO_TOURNAMENT);
 
             const embed = Embed.tournamentInfoEmbed(tournamentInfo);
-            await interaction.reply({ embeds: [embed], files:['./assets/esportsLogo.png'] });
+            if (registration) { // add buttons
+                const registerButton = Button.registerButton(name);
+                const unregisterButton = Button.unregisterButton(name);
+                const row = new MessageActionRow().addComponents(registerButton, unregisterButton);
+                await interaction.reply({ embeds: [embed], files:['./assets/esportsLogo.png'], components: [row] });
+            } else {
+                await interaction.reply({ embeds: [embed], files:['./assets/esportsLogo.png'] });
+            }
         } catch (err) {
             console.log(`Error in tournament info: ${err}`);
             await Translate.tournamentErrorTypeToInteractionReply(
@@ -109,7 +119,7 @@ export class TournamentCommands {
         name: string,
         @SlashOption("user", { description: "User to register. Only usable by admins.", required: false })
         user: User,
-        interaction: CommandInteraction
+        interaction: CommandInteraction | ButtonInteraction
     ) {
         if (!user) user = interaction.user;
         console.log(`COMMAND: Registering ${user.username} for tournament ${name}...`);
@@ -152,7 +162,7 @@ export class TournamentCommands {
         name: string,
         @SlashOption("user", { description: "User to unregister. Only usable by admins.", required: false })
         user: User,
-        interaction: CommandInteraction
+        interaction: CommandInteraction | ButtonInteraction
     ) {
         if (!user) user = interaction.user;
         console.log(`COMMAND: Unregistering ${user.username} for tournament ${name}...`);
@@ -262,5 +272,19 @@ export class TournamentCommands {
                 `There was an error removing an admin for this tournament. Please try again later.`
             );
         }
+    }
+
+    @ButtonComponent(new RegExp('^register-btn-.+', 's'))
+    registerUsingButton(interaction: ButtonInteraction) {
+        console.log(`BUTTON: Register button with customId ${interaction.customId} clicked...`);
+        const id = interaction.customId.slice(13);
+        this.register(id, interaction.user, interaction);
+    }
+
+    @ButtonComponent(new RegExp('^unregister-btn-.+', 's'))
+    unregisterUsingButton(interaction: ButtonInteraction) {
+        console.log(`BUTTON: Unregister button with customId ${interaction.customId} clicked...`);
+        const id = interaction.customId.slice(15);
+        this.unregister(id, interaction.user, interaction);
     }
 }
