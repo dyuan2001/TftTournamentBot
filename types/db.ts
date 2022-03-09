@@ -20,15 +20,15 @@ type summonerDB = {
 
 type updateExpression = {
     type: number,
-    variable: string,
-    key?: string,
-    value: string
+    variable?: string,
+    value?: any
 }
 
 type updateFormat = {
     updateExpression: string
     expressionAttributeNames: any
     expressionAttributeValues: any
+    conditionalExpression: string
 }
 
 type participantInfo = { // mapped to Discord Snowflake

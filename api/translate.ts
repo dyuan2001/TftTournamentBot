@@ -54,6 +54,48 @@ export class Translate {
     }
 
     /**
+     * Translates one updateExpression into an updateExpressionArray with its condition and insert condition.
+     * @param type Type of update.
+     * @param variable Variable to update.
+     * @param value New value to update to.
+     * @param condType If condition is required, equals updateType.COND.
+     * @param condValue Old value of variable to compare to.
+     * @param insert True if insert on id not found, False if no insert.
+     * @returns Array of update expressions corresponding to the variable.
+     */
+    static updateExpressionsToUpdateExpressionArray(
+        type: number,
+        variable: string,
+        value: any,
+        condType: number,
+        condValue: any,
+        insert: boolean
+    ): updateExpression[] {
+        let updateExpressionArray: updateExpression[] = [];
+        const expression: updateExpression = {
+            type: type,
+            variable: variable,
+            value: value
+        };
+        updateExpressionArray.push(expression);
+        // if condition exists
+        if (condType === updateType.COND) {
+            const condition: updateExpression = {
+                type: updateType.COND,
+                variable: variable,
+                value: condValue
+            };
+            updateExpressionArray.push(condition);
+        }
+        // if no insert
+        if (!insert) {
+            const noInsertCondition: updateExpression = { type: updateType.NO_INSERT };
+            updateExpressionArray.push(noInsertCondition);
+        }
+        return updateExpressionArray;
+    }
+
+    /**
      * Translates a list of updateExpressions into the DocumentClient update format.
      * @param updateExpressionArray List of updateExpressions for one object.
      * @returns updateFormat containing updateExpression, expressionAttributeNames, and expressionAttributeValues.
@@ -62,16 +104,26 @@ export class Translate {
         let updateExpression: string = '';
         let expressionAttributeNames = {};
         let expressionAttributeValues = {};
+        let conditionalExpression: string = '';
         for (let i = 0; i < updateExpressionArray.length; i++) {
             const currExpression = updateExpressionArray[i];
-            if (currExpression.type === updateType.SET) {
+            if (currExpression.type === updateType.NO_INSERT) {
+                if (conditionalExpression.length > 0) conditionalExpression += `AND `;
+                conditionalExpression += `attribute_exists(id) `;
+            } else if (currExpression.type === updateType.COND) {
+                let condition: string = `${currExpression.variable} = :${currExpression.variable}${i} `;
+                if (conditionalExpression.length > 0) condition = `AND ` + condition;
+                conditionalExpression += condition;
+                expressionAttributeValues[`:${currExpression.variable}${i}`] = currExpression.value; // override with array
+            } else if (currExpression.type === updateType.SET) {
                 updateExpression += `SET ${currExpression.variable} = :${currExpression.variable}${i} `;
                 expressionAttributeValues[`:${currExpression.variable}${i}`] = currExpression.value; // override with array
             } else if (currExpression.type === updateType.ADDLIST) {
                 updateExpression += `SET ${currExpression.variable} = list_append(${currExpression.variable}, :${currExpression.variable}${i}) `;
                 expressionAttributeValues[`:${currExpression.variable}${i}`] = [currExpression.value]; // override with array
-            } else if (currExpression.type === updateType.ADDMAP) {
-                updateExpression += `SET #${currExpression.variable}${i}.${currExpression.key} = :${currExpression.variable}${i}`;
+            } else if (currExpression.type === updateType.ADDMAP) { // remember dot between property and key
+                updateExpression += `SET ${currExpression.variable} = :${currExpression.variable}${i}`;
+                expressionAttributeValues[`:${currExpression.variable}${i}`] = currExpression.value; // override with array
             } else if (currExpression.type === updateType.REMOVELIST) {
                 updateExpression +=  `REMOVE ${currExpression.variable}[${currExpression.value}] `;
             }
@@ -80,7 +132,8 @@ export class Translate {
         let retObject: updateFormat = {
             updateExpression,
             expressionAttributeNames,
-            expressionAttributeValues
+            expressionAttributeValues,
+            conditionalExpression
         }
         return retObject;
     }
@@ -104,7 +157,8 @@ export class Translate {
         switch (err.message) {
             case tournamentErrorType.DUPLICATE_TOURNAMENT:
                 await await interaction.reply(`Duplicate ID error: Tournament with ID **${name}** already exists. Please choose a different name.`); break;
-            case tournamentErrorType.UPDATE_CONDITION:
+            case tournamentErrorType.UPDATE_COND_FAIL:
+                await interaction.reply(`The service for tournament **${name}** is overwhelmed right now. Please try again in a couple seconds.`); break;
             case tournamentErrorType.NO_TOURNAMENT:
                 await interaction.reply(`There is no tournament with id **${name}**. Please check the name again (case-sensitive).`); break;
             case tournamentErrorType.NO_SUMMONER_NAME:

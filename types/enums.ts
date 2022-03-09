@@ -1,5 +1,8 @@
 export const enum updateType {
-    SET = 0,
+    NO_INSERT = 0,
+    NO_COND,
+    COND,
+    SET,
     ADDLIST,
     ADDMAP,
     REMOVELIST
@@ -14,6 +17,6 @@ export const enum tournamentErrorType {
     ALREADY_ADMIN = 'already admin',
     NOT_ADMIN = 'not admin',
     NO_ADMIN_PERMISSION = 'no admin permission',
-    UPDATE_CONDITION = 'The conditional request failed.',
+    UPDATE_COND_FAIL = 'The conditional request failed.',
     COLLECTOR_TIMEOUT = 'Collector received no interactions before ending with reason: time'
 }

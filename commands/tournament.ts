@@ -6,7 +6,6 @@ import { tournamentErrorType, updateType } from "../types/enums.js";
 import { Translate } from "../api/translate.js";
 import { Embed } from "../components/embed.js";
 import { Button } from "../components/button.js";
-import { client } from "../index.js";
 
 @Discord()
 @SlashGroup("tournament", "Tournament creation, registration, and other commands.")
@@ -70,12 +69,12 @@ export class TournamentCommands {
             });
             const message = await interaction.fetchReply() as Message;
             const buttonInteraction = await message.awaitMessageComponent({ componentType: 'BUTTON', time: 15000});
-            if (buttonInteraction.customId === `cancel-btn`) {
+            if (buttonInteraction.customId === `cancel-btn`) { // Cancel delete
                 await interaction.editReply({
                     content: `The delete operation on tournament **${name}** has been successfully cancelled.`,
                     components: []
                 });
-            } else {
+            } else { // Delete tournament
                 await DatabaseAPI.deleteTournament(name);
                 await interaction.editReply({
                     content: `💥💥💥 **BOOM!** 💥💥💥`,
@@ -105,13 +104,15 @@ export class TournamentCommands {
     ) {
         console.log(`\nCOMMAND: Setting description of tournament ${name}...`);
         try {
-            await Helper.checkAdmin(interaction.user, null, name);
-            const setDescriptionExpression: updateExpression = {
-                type: updateType.SET,
-                variable: `description`,
-                value: description
-            };
-            const updateExpressionArray = [setDescriptionExpression];
+            const tournamentInfo = await Helper.checkAdmin(interaction.user, null, name);
+            const updateExpressionArray = Translate.updateExpressionsToUpdateExpressionArray(
+                updateType.SET,
+                `description`,
+                description,
+                updateType.COND,
+                tournamentInfo.description,
+                false
+            );
             await DatabaseAPI.updateTournament(name, updateExpressionArray);
             await interaction.reply(`Tournament **${name}**'s description has been successfully set to *${description}*!`);
         } catch (err) {
@@ -181,13 +182,15 @@ export class TournamentCommands {
 
             const index: number = tournamentInfo.participants.indexOf(user.id);
             if (index >= 0) throw new Error(tournamentErrorType.ALREADY_REGISTERED);
-
-            const registerExpression: updateExpression = {
-                type: updateType.ADDLIST,
-                variable: "participants",
-                value: user.id
-            };
-            const updateExpressionArray = [registerExpression];
+            
+            const updateExpressionArray = Translate.updateExpressionsToUpdateExpressionArray(
+                updateType.ADDLIST,
+                `participants`,
+                user.id,
+                updateType.NO_COND,
+                '',
+                false
+            );
             await DatabaseAPI.updateTournament(name, updateExpressionArray);
             await interaction.reply(`has been successfully registered for tournament **${name}**!`);
             await interaction.editReply(`<@${user.id}> has been successfully registered for tournament **${name}**!`);
@@ -222,12 +225,14 @@ export class TournamentCommands {
             const index: number = tournamentInfo.participants.indexOf(user.id);
             if (index < 0) throw new Error(tournamentErrorType.NOT_REGISTERED);
 
-            const unregisterExpression: updateExpression = {
-                type: updateType.REMOVELIST,
-                variable: "participants",
-                value: index.toString()
-            };
-            const updateExpressionArray = [unregisterExpression];
+            const updateExpressionArray = Translate.updateExpressionsToUpdateExpressionArray(
+                updateType.REMOVELIST,
+                `participants`,
+                index,
+                updateType.COND,
+                tournamentInfo.participants,
+                false
+            );
             await DatabaseAPI.updateTournament(name, updateExpressionArray);
             await interaction.reply(`has been successfully unregistered for tournament **${name}**.`);
             await interaction.editReply(`<@${user.id}> has been successfully unregistered for tournament **${name}**.`);
@@ -261,12 +266,14 @@ export class TournamentCommands {
             const index: number = tournamentInfo.admins.indexOf(user.id);
             if (index >= 0) throw new Error(tournamentErrorType.ALREADY_ADMIN);
 
-            const addAdminExpression: updateExpression = {
-                type: updateType.ADDLIST,
-                variable: "admins",
-                value: user.id
-            };
-            const updateExpressionArray = [addAdminExpression];
+            const updateExpressionArray = Translate.updateExpressionsToUpdateExpressionArray(
+                updateType.ADDLIST,
+                `admins`,
+                user.id,
+                updateType.COND,
+                tournamentInfo.admins,
+                false
+            );
             await DatabaseAPI.updateTournament(name, updateExpressionArray);
             await interaction.reply(`has been successfully added as an admin for tournament **${name}**!`);
             await interaction.editReply(`<@${user.id}> has been successfully added as an admin for tournament **${name}**!`);
@@ -300,12 +307,14 @@ export class TournamentCommands {
             const index: number = tournamentInfo.admins.indexOf(user.id);
             if (index < 0) throw new Error(tournamentErrorType.NOT_ADMIN);
 
-            const removeAdminExpression: updateExpression = {
-                type: updateType.REMOVELIST,
-                variable: "admins",
-                value: index.toString()
-            };
-            const updateExpressionArray = [removeAdminExpression];
+            const updateExpressionArray = Translate.updateExpressionsToUpdateExpressionArray(
+                updateType.REMOVELIST,
+                `admins`,
+                index,
+                updateType.COND,
+                tournamentInfo.admins,
+                false
+            );
             await DatabaseAPI.updateTournament(name, updateExpressionArray);
             await interaction.reply(`has been successfully removed as an admin for tournament **${name}**.`);
             await interaction.editReply(`<@${user.id}> has been successfully removed as an admin for tournament **${name}**.`);

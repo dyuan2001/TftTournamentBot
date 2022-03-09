@@ -38,13 +38,14 @@ export class DatabaseAPI {
         let params = {
             TableName: table,
             Key: { id: pk },
-            UpdateExpression: updateFormatObject.updateExpression,
-            ConditionExpression: 'attribute_exists(id)'
+            UpdateExpression: updateFormatObject.updateExpression
         };
         if (Object.keys(updateFormatObject.expressionAttributeNames).length > 0)
             params['ExpressionAttributeNames'] = updateFormatObject.expressionAttributeNames;
         if (Object.keys(updateFormatObject.expressionAttributeValues).length > 0)
             params['ExpressionAttributeValues'] = updateFormatObject.expressionAttributeValues;
+        if (updateFormatObject.conditionalExpression)
+            params['ConditionExpression'] = updateFormatObject.conditionalExpression;
 
         console.log(`Updating object ${pk} in table ${table} with updateExpression: ${updateFormatObject.updateExpression}`);
         try {
