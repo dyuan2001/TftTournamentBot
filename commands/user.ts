@@ -15,7 +15,7 @@ export class UserCommands {
         summoner: string,
         interaction: CommandInteraction
     ) {
-        console.log(`COMMAND: Setting summoner ${summoner} for ${interaction.user.username}...`);
+        console.log(`\nCOMMAND: Setting summoner ${summoner} for ${interaction.user.username}...`);
         try {
             const summonerInfo = await Helper.getSummonerFromName(summoner, true);
             await DatabaseAPI.putUser({
@@ -42,7 +42,7 @@ export class UserCommands {
         interaction: CommandInteraction
     ) {
         if (!user) user = interaction.user;
-        console.log(`COMMAND: Refreshing info for ${user.username}...`);
+        console.log(`\nCOMMAND: Refreshing info for ${user.username}...`);
         try {
             const userInfo = await DatabaseAPI.getUser(user.id);
             if (!userInfo) {
@@ -74,7 +74,7 @@ export class UserCommands {
         interaction: CommandInteraction
     ) {
         if (!user) user = interaction.user;
-        console.log(`COMMAND: Getting info for ${user.username}...`);
+        console.log(`\nCOMMAND: Getting info for ${user.username}...`);
         try {
             const userInfo = await DatabaseAPI.getUser(user.id);
             if (!userInfo) {

@@ -1,16 +1,17 @@
 import { Helper } from "../api/helper.js";
-import { ButtonInteraction, CommandInteraction, Interaction, MessageActionRow, User } from "discord.js";
+import { ButtonInteraction, CommandInteraction, Message, MessageActionRow, User } from "discord.js";
 import { ButtonComponent, Discord, Slash, SlashGroup, SlashOption } from "discordx";
 import { DatabaseAPI } from "../api/db.js";
 import { tournamentErrorType, updateType } from "../types/enums.js";
 import { Translate } from "../api/translate.js";
 import { Embed } from "../components/embed.js";
 import { Button } from "../components/button.js";
+import { client } from "../index.js";
 
 @Discord()
 @SlashGroup("tournament", "Tournament creation, registration, and other commands.")
 export class TournamentCommands {
-    @Slash("create", { description: "Create a tournament."} )
+    @Slash("create", { description: "Create a tournament." })
     async create(
         @SlashOption("name", { description: "Tournament name (must be unique)."})
         name: string,
@@ -21,7 +22,7 @@ export class TournamentCommands {
         interaction: CommandInteraction
     ) {
         if (!description) description = '';
-        console.log(`COMMAND: Creating tournament with id ${name} and admin ${interaction.user.username}...`);
+        console.log(`\nCOMMAND: Creating tournament with id ${name} and admin ${interaction.user.username}...`);
         try {
             let admins = [interaction.user.id];
             if (admin) admins.push(admin.id);
@@ -48,6 +49,52 @@ export class TournamentCommands {
         }
     }
 
+    @Slash("delete", { description: "Delete a tournament. Only usable by admins." })
+    async delete(
+        @SlashOption("name", { description: "Tournament name." })
+        name: string,
+        interaction: CommandInteraction
+    ) {
+        console.log(`\nCOMMAND: Deleting tournament with id ${name}...`);
+        try {
+            await Helper.checkAdmin(interaction.user, null, name);
+            await interaction.deferReply({ ephemeral: true });
+
+            const deleteTournamentButton = Button.deleteTournamentButton(name);
+            const cancelButton = Button.cancelButton();
+            const row = new MessageActionRow().addComponents(deleteTournamentButton, cancelButton);
+            
+            interaction.editReply({
+                content: `Are you sure you want to delete tournament **${name}**? ***This action cannot be undone.***`, 
+                components: [row]
+            });
+            const message = await interaction.fetchReply() as Message;
+            const buttonInteraction = await message.awaitMessageComponent({ componentType: 'BUTTON', time: 15000});
+            if (buttonInteraction.customId === `cancel-btn`) {
+                await interaction.editReply({
+                    content: `The delete operation on tournament **${name}** has been successfully cancelled.`,
+                    components: []
+                });
+            } else {
+                await DatabaseAPI.deleteTournament(name);
+                await interaction.editReply({
+                    content: `💥💥💥 **BOOM!** 💥💥💥`,
+                    components: []
+                });
+                await interaction.followUp(`Tournament **${name}** has been successfully deleted.`);
+            }
+        } catch (err) {
+            console.log(`Error in tournament create: ${err}`);
+            await Translate.tournamentErrorTypeToInteractionReply(
+                err,
+                name,
+                interaction.user,
+                interaction,
+                `There was an error deleting this tournament. Please try again later.`
+            );
+        }
+    }
+
     @Slash("setdescription", { description: "Set tournament description. Only usable by admins." })
     async setDescription(
         @SlashOption("name", { description: "Tournament name." })
@@ -56,7 +103,7 @@ export class TournamentCommands {
         description: string,
         interaction: CommandInteraction
     ) {
-        console.log(`COMMAND: Setting description of tournament ${name}...`);
+        console.log(`\nCOMMAND: Setting description of tournament ${name}...`);
         try {
             await Helper.checkAdmin(interaction.user, null, name);
             const setDescriptionExpression: updateExpression = {
@@ -87,7 +134,7 @@ export class TournamentCommands {
         registration: boolean,
         interaction: CommandInteraction
     ) {
-        console.log(`COMMAND: Getting info of tournament ${name}...`);
+        console.log(`\nCOMMAND: Getting info of tournament ${name}...`);
         try {
             const tournamentInfo = await DatabaseAPI.getTournament(name);
             if (!tournamentInfo) throw new Error(tournamentErrorType.NO_TOURNAMENT);
@@ -122,7 +169,7 @@ export class TournamentCommands {
         interaction: CommandInteraction | ButtonInteraction
     ) {
         if (!user) user = interaction.user;
-        console.log(`COMMAND: Registering ${user.username} for tournament ${name}...`);
+        console.log(`\nCOMMAND: Registering ${user.username} for tournament ${name}...`);
         try {
             const tournamentInfo: tournamentDB = await DatabaseAPI.getTournament(name);
             if (!tournamentInfo) throw new Error(tournamentErrorType.NO_TOURNAMENT);
@@ -165,7 +212,7 @@ export class TournamentCommands {
         interaction: CommandInteraction | ButtonInteraction
     ) {
         if (!user) user = interaction.user;
-        console.log(`COMMAND: Unregistering ${user.username} for tournament ${name}...`);
+        console.log(`\nCOMMAND: Unregistering ${user.username} for tournament ${name}...`);
         try {
             const tournamentInfo = await DatabaseAPI.getTournament(name);
             if (!tournamentInfo) throw new Error(tournamentErrorType.NO_TOURNAMENT);
@@ -204,7 +251,7 @@ export class TournamentCommands {
         user: User,
         interaction: CommandInteraction
     ) {
-        console.log(`COMMAND: Adding ${user.username} as admin to tournament ${name}...`);
+        console.log(`\nCOMMAND: Adding ${user.username} as admin to tournament ${name}...`);
         try {
             const tournamentInfo: tournamentDB = await DatabaseAPI.getTournament(name);
             if (!tournamentInfo) throw new Error(tournamentErrorType.NO_TOURNAMENT);
@@ -243,7 +290,7 @@ export class TournamentCommands {
         user: User,
         interaction: CommandInteraction
     ) {
-        console.log(`COMMAND: Removing ${user.username} as an admin for tournament ${name}...`);
+        console.log(`\nCOMMAND: Removing ${user.username} as an admin for tournament ${name}...`);
         try {
             const tournamentInfo = await DatabaseAPI.getTournament(name);
             if (!tournamentInfo) throw new Error(tournamentErrorType.NO_TOURNAMENT);
@@ -276,14 +323,14 @@ export class TournamentCommands {
 
     @ButtonComponent(new RegExp('^register-btn-.+', 's'))
     registerUsingButton(interaction: ButtonInteraction) {
-        console.log(`BUTTON: Register button with customId ${interaction.customId} clicked...`);
+        console.log(`\nBUTTON: Register button with customId ${interaction.customId} clicked...`);
         const id = interaction.customId.slice(13);
         this.register(id, interaction.user, interaction);
     }
 
     @ButtonComponent(new RegExp('^unregister-btn-.+', 's'))
     unregisterUsingButton(interaction: ButtonInteraction) {
-        console.log(`BUTTON: Unregister button with customId ${interaction.customId} clicked...`);
+        console.log(`\nBUTTON: Unregister button with customId ${interaction.customId} clicked...`);
         const id = interaction.customId.slice(15);
         this.unregister(id, interaction.user, interaction);
     }

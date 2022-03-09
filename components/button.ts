@@ -26,4 +26,22 @@ export class Button {
             .setCustomId(`unregister-btn-${id}`);
         return button;
     }
+
+    static deleteTournamentButton(id: string): MessageButton {
+        let button = new MessageButton()
+            .setLabel("Delete")
+            .setEmoji("💣")
+            .setStyle("DANGER")
+            .setCustomId(`delete-tournament-btn-${id}`);
+        return button;
+    }
+
+    static cancelButton(): MessageButton {
+        let button = new MessageButton()
+            .setLabel("Cancel")
+            .setEmoji("↪️")
+            .setStyle("SECONDARY")
+            .setCustomId(`cancel-btn`);
+        return button;
+    }
 }

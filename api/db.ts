@@ -80,6 +80,28 @@ export class DatabaseAPI {
     }
 
     /**
+     * Generic delete helper function.
+     * @param pk Primary key for deletion.
+     * @param table Table for delete function.
+     * @returns Promise for success or failure.
+     */
+    static async delete(pk: string, table: string): Promise<any> {
+        const params = {
+            TableName: table,
+            Key: { id: pk }
+        };
+
+        try {
+            await this.docClient.delete(params).promise();
+            return Promise.resolve();
+        } catch (err: AWSError | any) {
+            const error = err.message;
+            console.log(`Error in delete: ${error}`);
+            return Promise.reject(error);
+        }
+    }
+
+    /**
      * Put user info into table discord-user-table.
      * @param user userDB object to be put.
      * @returns Promise for userDB object defined by the parameters.
@@ -148,5 +170,10 @@ export class DatabaseAPI {
     static async getTournament(id: string): Promise<tournamentDB> {
         const item: tournamentDB = await this.get(id, 'tournament-table');
         return item;
+    }
+
+    static async deleteTournament(id: string): Promise<void> {
+        await this.delete(id, 'tournament-table');
+        return Promise.resolve();
     }
 }

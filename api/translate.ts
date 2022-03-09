@@ -100,6 +100,7 @@ export class Translate {
         interaction: CommandInteraction | ButtonInteraction, 
         defaultMessage: string
     ): Promise<void> {
+        console.log(err.message);
         switch (err.message) {
             case tournamentErrorType.DUPLICATE_TOURNAMENT:
                 await await interaction.reply(`Duplicate ID error: Tournament with ID **${name}** already exists. Please choose a different name.`); break;
@@ -123,6 +124,8 @@ export class Translate {
                 await interaction.editReply(`<@${user.id}> is already not an admin for tournament **${name}**.`); break;
             case tournamentErrorType.NO_ADMIN_PERMISSION:
                 await interaction.reply(`You do not have permission to run this command (must be an admin).`);
+            case tournamentErrorType.COLLECTOR_TIMEOUT:
+                await interaction.editReply({ content: `The command has timed out.`, components: [] }); break;
             default:
                 await interaction.reply(defaultMessage);
         }

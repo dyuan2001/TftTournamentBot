@@ -14,5 +14,6 @@ export const enum tournamentErrorType {
     ALREADY_ADMIN = 'already admin',
     NOT_ADMIN = 'not admin',
     NO_ADMIN_PERMISSION = 'no admin permission',
-    UPDATE_CONDITION = 'The conditional request failed.'
+    UPDATE_CONDITION = 'The conditional request failed.',
+    COLLECTOR_TIMEOUT = 'Collector received no interactions before ending with reason: time'
 }
