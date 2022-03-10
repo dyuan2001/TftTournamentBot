@@ -16,6 +16,7 @@ export class DatabaseAPI {
             Item: item
         };
 
+        console.log(`Putting object in table ${table}`);
         try {
             await this.docClient.put(params).promise();
             return params.Item;
@@ -70,12 +71,37 @@ export class DatabaseAPI {
             Key: { id: pk }
         }
 
+        console.log(`Getting object ${pk} in table ${table}`);
         try {
             const data = await this.docClient.get(params).promise();
             return data.Item;
         } catch (err: AWSError | any) {
             const error = err.message;
             console.log(`Error in get: ${error}`);
+            return Promise.reject(error);
+        }
+    }
+    
+    /**
+     * Generic batchGet helper function.
+     * @param items Array of batchGetExpressions containing a pk and table.
+     * @returns Promise for all items.
+     */
+    static async batchGet(items: batchGetExpression[]): Promise<any> {
+        let params = { RequestItems: {} };
+        for (const item of items) {
+            if (!params.RequestItems.hasOwnProperty(item.table))
+                params.RequestItems[item.table] = { Keys: [] };
+            params.RequestItems[item.table].Keys.push({ id: item.pk });
+        }
+
+        console.log(`Batch getting ${items.length} objects from table ${items[0].table}`);
+        try {
+            const data = await this.docClient.batchGet(params).promise();
+            return data.Responses;
+        } catch (err: AWSError | any) {
+            const error = err.message;
+            console.log(`Error in batchGet: ${error}`);
             return Promise.reject(error);
         }
     }
@@ -92,6 +118,7 @@ export class DatabaseAPI {
             Key: { id: pk }
         };
 
+        console.log(`Deleting object ${pk} in table ${table}`);
         try {
             await this.docClient.delete(params).promise();
             return Promise.resolve();
@@ -133,8 +160,19 @@ export class DatabaseAPI {
     }
 
     /**
+     * Update user info with specified update expressions in table discord-user-table.
+     * @param id userDB object to be updated.
+     * @param updateExpressionArray List of operations to be done.
+     * @returns Promise that indicates success or failure.
+     */
+    static async updateUser(id: string, updateExpressionArray: updateExpression[]): Promise<any> {
+        const result: Promise<any> = await this.update(id, 'discord-user-table', updateExpressionArray);
+        return result;
+    }
+
+    /**
      * Update tournament with specified update expressions in table tournament-table.
-     * @param id tournamentDB objecto to be updated.
+     * @param id tournamentDB object to be updated.
      * @param updateExpressionArray List of operations to be done.
      * @returns Promise that indicates success or failure.
      */
@@ -173,6 +211,30 @@ export class DatabaseAPI {
         return item;
     }
 
+    /**
+     * BatchGet users from table discord-user-table.
+     * @param users Array of Discord user ids.
+     * @returns Promise for array of userDBs matching the user ids.
+     */
+    static async batchGetUsers(users: string[]): Promise<userDB[]> {
+        let userExpressions: batchGetExpression[] = [];
+        for (const user of users) {
+            userExpressions.push({ 
+                pk: user,
+                table: 'discord-user-table'
+            });
+        }
+
+        const responses = await this.batchGet(userExpressions);
+        const userDBArray: userDB[] = Translate.batchGetResponsesToOneDBObject(responses, 'discord-user-table');
+        return userDBArray;
+    }
+
+    /**
+     * Delete tournament from table tournament-table.
+     * @param id Unique tournament id.
+     * @returns Promise that indicates success or failure.
+     */
     static async deleteTournament(id: string): Promise<void> {
         await this.delete(id, 'tournament-table');
         return Promise.resolve();

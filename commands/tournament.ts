@@ -1,5 +1,5 @@
 import { Helper } from "../api/helper.js";
-import { ButtonInteraction, CommandInteraction, Message, MessageActionRow, User } from "discord.js";
+import { ButtonInteraction, CommandInteraction, GuildMember, Message, MessageActionRow, User } from "discord.js";
 import { ButtonComponent, Discord, Slash, SlashGroup, SlashOption } from "discordx";
 import { DatabaseAPI } from "../api/db.js";
 import { tournamentErrorType, updateType } from "../types/enums.js";
@@ -17,9 +17,10 @@ export class TournamentCommands {
         @SlashOption("description", { description: "Tournament description. Can be set later.", required: false })
         description: string,
         @SlashOption("admin", { description: "Add a secondary admin besides you. Can set more later.", required: false })
-        admin: User,
+        member: GuildMember,
         interaction: CommandInteraction
     ) {
+        const admin: User = (!member) ? undefined : member.user;
         if (!description) description = '';
         console.log(`\nCOMMAND: Creating tournament with id ${name} and admin ${interaction.user.username}...`);
         try {
@@ -161,15 +162,72 @@ export class TournamentCommands {
         }
     }
 
+    @Slash("participants", { description: "Get the list of registered participants." })
+    async participants(
+        @SlashOption("name", { description: "Tournament name." })
+        name: string,
+        interaction: CommandInteraction
+    ) {
+        console.log(`\nCOMMAND: Getting participants of tournament ${name}...`);
+        try {
+            const tournamentInfo = await DatabaseAPI.getTournament(name);
+            if (!tournamentInfo) throw new Error(tournamentErrorType.NO_TOURNAMENT);
+
+            await interaction.deferReply();
+
+            const participants = await DatabaseAPI.batchGetUsers(tournamentInfo.participants);
+            if (participants.length <= Embed.maxParticipants) {
+                const embed = Embed.tournamentParticipantsEmbed(0, participants.length, participants, tournamentInfo);
+                await interaction.editReply({ embeds: [embed], files:['./assets/esportsLogo.png'] });
+            } else {
+                const message = await interaction.fetchReply() as Message;
+                const collector = message.createMessageComponentCollector({
+                    componentType: 'BUTTON',
+                    filter: ({user}) => user.id === interaction.user.id
+                });
+
+                let startIndex = 0;
+                let endIndex = (startIndex + Embed.maxParticipants > participants.length) ? participants.length : startIndex + Embed.maxParticipants;
+                let embed = Embed.tournamentParticipantsEmbed(startIndex, endIndex, participants, tournamentInfo);
+                const forwardButton = Button.forwardButton();
+                const backButton = Button.backButton().setDisabled(true);
+                let row = new MessageActionRow().addComponents(backButton, forwardButton);
+
+                await interaction.editReply({ embeds: [embed], files:['./assets/esportsLogo.png'], components: [row] });
+                
+                collector.on('collect', async (buttonInteraction: ButtonInteraction) => {
+                    startIndex = (buttonInteraction.customId === 'forward-btn') ? startIndex + Embed.maxParticipants : startIndex - Embed.maxParticipants;
+                    endIndex = (startIndex + Embed.maxParticipants > participants.length) ? participants.length : startIndex + Embed.maxParticipants;
+                    
+                    embed = Embed.tournamentParticipantsEmbed(startIndex, endIndex, participants, tournamentInfo);
+                    backButton.setDisabled(startIndex === 0);
+                    forwardButton.setDisabled(endIndex === participants.length);
+
+                    await buttonInteraction.update({ embeds: [embed], files:['./assets/esportsLogo.png'], components: [row] });
+                });
+                collector.on('end', async (interactions: number) => { console.log(`Participant embed for tournament ${name} got ${interactions} interactions.`) });
+            }
+        } catch (err) {
+            console.log(`Error in tournament participants: ${err}`);
+            await Translate.tournamentErrorTypeToInteractionReply(
+                err,
+                name,
+                interaction.user,
+                interaction,
+                `There was an error getting the participants of this tournament. Please try again later.`
+            );
+        }
+    }
+
     @Slash("register", { description: "Register for a tournament." } )
     async register(
         @SlashOption("name", { description: "Tournament name."} )
         name: string,
         @SlashOption("user", { description: "User to register. Only usable by admins.", required: false })
-        user: User,
+        member: GuildMember,
         interaction: CommandInteraction | ButtonInteraction
     ) {
-        if (!user) user = interaction.user;
+        const user: User = (!member) ? interaction.user : member.user;
         console.log(`\nCOMMAND: Registering ${user.username} for tournament ${name}...`);
         try {
             const tournamentInfo: tournamentDB = await DatabaseAPI.getTournament(name);
@@ -211,10 +269,10 @@ export class TournamentCommands {
         @SlashOption("name", { description: "Tournament name." })
         name: string,
         @SlashOption("user", { description: "User to unregister. Only usable by admins.", required: false })
-        user: User,
+        member: GuildMember,
         interaction: CommandInteraction | ButtonInteraction
     ) {
-        if (!user) user = interaction.user;
+        const user: User = (!member) ? interaction.user : member.user;
         console.log(`\nCOMMAND: Unregistering ${user.username} for tournament ${name}...`);
         try {
             const tournamentInfo = await DatabaseAPI.getTournament(name);
@@ -253,9 +311,10 @@ export class TournamentCommands {
         @SlashOption("name", { description: "Tournament name." })
         name: string,
         @SlashOption("user", { description: "User to make admin." })
-        user: User,
+        member: GuildMember,
         interaction: CommandInteraction
     ) {
+        const user: User = member.user;
         console.log(`\nCOMMAND: Adding ${user.username} as admin to tournament ${name}...`);
         try {
             const tournamentInfo: tournamentDB = await DatabaseAPI.getTournament(name);
@@ -294,9 +353,10 @@ export class TournamentCommands {
         @SlashOption("name", { description: "Tournament name." })
         name: string,
         @SlashOption("user", { description: "User to remove admin." })
-        user: User,
+        member: GuildMember,
         interaction: CommandInteraction
     ) {
+        const user: User = member.user;
         console.log(`\nCOMMAND: Removing ${user.username} as an admin for tournament ${name}...`);
         try {
             const tournamentInfo = await DatabaseAPI.getTournament(name);
@@ -334,13 +394,13 @@ export class TournamentCommands {
     registerUsingButton(interaction: ButtonInteraction) {
         console.log(`\nBUTTON: Register button with customId ${interaction.customId} clicked...`);
         const id = interaction.customId.slice(13);
-        this.register(id, interaction.user, interaction);
+        this.register(id, undefined, interaction);
     }
 
     @ButtonComponent(new RegExp('^unregister-btn-.+', 's'))
     unregisterUsingButton(interaction: ButtonInteraction) {
         console.log(`\nBUTTON: Unregister button with customId ${interaction.customId} clicked...`);
         const id = interaction.customId.slice(15);
-        this.unregister(id, interaction.user, interaction);
+        this.unregister(id, undefined, interaction);
     }
 }

@@ -3,6 +3,8 @@ import { MessageEmbed, User } from "discord.js";
 import { client } from "../index.js";
 
 export class Embed {
+    static readonly maxParticipants = 8;
+
     /**
      * User info embed that contains information in summonerDB.
      * @param user Discord user with summoner id matching summonerInDatabase.
@@ -27,7 +29,7 @@ export class Embed {
             )
             .setTimestamp()
             .setFooter({ text: `Built by @dyuan2001 on GitHub.`, iconURL: 'attachment://esportsLogo.png' });
-
+        console.log(`https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png`);
         return embed;
     }
 
@@ -45,6 +47,30 @@ export class Embed {
             .addFields(
                 { name: 'Participants', value: `${tournamentInfo.participants.length}` },
                 { name: 'Admins', value: `${adminsString}` }
+            )
+            .setTimestamp()
+            .setFooter({ text: `Built by @dyuan2001 on GitHub.`, iconURL: 'attachment://esportsLogo.png' });
+        
+        return embed;
+    }
+
+    static tournamentParticipantsEmbed(startIndex: number, endIndex: number, participants: userDB[], tournament: tournamentDB): MessageEmbed {
+        let discordNames = '';
+        let summonerNames = '';
+
+        for (let i = startIndex; i < endIndex; i++) {
+            discordNames += `<@${participants[i].id}>\n`;
+            summonerNames += `${participants[i].summonerName}\n`;
+        }
+        discordNames = discordNames.slice(0, -1);
+        summonerNames = summonerNames.slice(0, -1);
+        
+        let embed = new MessageEmbed()
+            .setTitle(`${tournament.id} participants: ${startIndex + 1}-${endIndex} of ${participants.length}`)
+            .setAuthor({ name: 'TFT Bot', iconURL: `${client.user.avatarURL()}` })
+            .addFields(
+                { name: 'Discord', value: `${discordNames}`, inline: true },
+                { name: 'Summoner', value: `${summonerNames}`, inline: true }
             )
             .setTimestamp()
             .setFooter({ text: `Built by @dyuan2001 on GitHub.`, iconURL: 'attachment://esportsLogo.png' });

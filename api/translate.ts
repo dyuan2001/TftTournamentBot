@@ -139,6 +139,21 @@ export class Translate {
     }
 
     /**
+     * Translates the responses from batchGet to an array of objects from the database.
+     * @param responses Responses from batchGet.
+     * @param table Table items to extract from responses.
+     * @returns Array of objects in responses corresponding to the table.
+     */
+    static batchGetResponsesToOneDBObject(responses: Object, table: string): any {
+        if (!responses.hasOwnProperty(table)) return null;
+        let dbObjectArray: any = [];
+        for (const obj of responses[table]) {
+            dbObjectArray.push(obj);
+        }
+        return dbObjectArray;
+    }
+
+    /**
      * Translates an error message to a interaction reply.
      * @param err Error thrown.
      * @param name Tournament id.
@@ -154,34 +169,65 @@ export class Translate {
         defaultMessage: string
     ): Promise<void> {
         console.log(err.message);
-        switch (err.message) {
-            case tournamentErrorType.DUPLICATE_TOURNAMENT:
-                await await interaction.reply(`Duplicate ID error: Tournament with ID **${name}** already exists. Please choose a different name.`); break;
-            case tournamentErrorType.UPDATE_COND_FAIL:
-                await interaction.reply(`The service for tournament **${name}** is overwhelmed right now. Please try again in a couple seconds.`); break;
-            case tournamentErrorType.NO_TOURNAMENT:
-                await interaction.reply(`There is no tournament with id **${name}**. Please check the name again (case-sensitive).`); break;
-            case tournamentErrorType.NO_SUMMONER_NAME:
-                await interaction.reply(`has not set a summoner name. Please set a summoner name with \`user set <summoner_name>\`.`);
-                await interaction.editReply(`<@${user.id}> has not set a summoner name. Please set a summoner name with \`user set <summoner_name>\`.`); break;
-            case tournamentErrorType.ALREADY_REGISTERED:
-                await interaction.reply(`is already registered for tournament **${name}**.`);
-                await interaction.editReply(`<@${user.id}> is already registered for tournament **${name}**.`); break;
-            case tournamentErrorType.NOT_REGISTERED:
-                await interaction.reply(`is already not registered for tournament **${name}**.`);
-                await interaction.editReply(`<@${user.id}> is already not registered for tournament **${name}**.`); break;
-            case tournamentErrorType.ALREADY_ADMIN:
-                await interaction.reply(`is already an admin for tournament **${name}**.`);
-                await interaction.editReply(`<@${user.id}> is already an admin for tournament **${name}**.`); break;
-            case tournamentErrorType.NOT_ADMIN:
-                await interaction.reply(`is already not an admin for tournament **${name}**.`);
-                await interaction.editReply(`<@${user.id}> is already not an admin for tournament **${name}**.`); break;
-            case tournamentErrorType.NO_ADMIN_PERMISSION:
-                await interaction.reply(`You do not have permission to run this command (must be an admin).`);
-            case tournamentErrorType.COLLECTOR_TIMEOUT:
-                await interaction.editReply({ content: `The command has timed out.`, components: [] }); break;
-            default:
-                await interaction.reply(defaultMessage);
+        try {
+            switch (err.message) {
+                case tournamentErrorType.DUPLICATE_TOURNAMENT:
+                    await await interaction.reply(`Duplicate ID error: Tournament with ID **${name}** already exists. Please choose a different name.`); break;
+                case tournamentErrorType.UPDATE_COND_FAIL:
+                    await interaction.reply(`The service for tournament **${name}** is overwhelmed right now. Please try again in a couple seconds.`); break;
+                case tournamentErrorType.NO_TOURNAMENT:
+                    await interaction.reply(`There is no tournament with id **${name}**. Please check the name again (case-sensitive).`); break;
+                case tournamentErrorType.NO_SUMMONER_NAME:
+                    await interaction.reply(`has not set a summoner name. Please set a summoner name with \`user set <summoner_name>\`.`);
+                    await interaction.editReply(`<@${user.id}> has not set a summoner name. Please set a summoner name with \`user set <summoner_name>\`.`); break;
+                case tournamentErrorType.ALREADY_REGISTERED:
+                    await interaction.reply(`is already registered for tournament **${name}**.`);
+                    await interaction.editReply(`<@${user.id}> is already registered for tournament **${name}**.`); break;
+                case tournamentErrorType.NOT_REGISTERED:
+                    await interaction.reply(`is already not registered for tournament **${name}**.`);
+                    await interaction.editReply(`<@${user.id}> is already not registered for tournament **${name}**.`); break;
+                case tournamentErrorType.ALREADY_ADMIN:
+                    await interaction.reply(`is already an admin for tournament **${name}**.`);
+                    await interaction.editReply(`<@${user.id}> is already an admin for tournament **${name}**.`); break;
+                case tournamentErrorType.NOT_ADMIN:
+                    await interaction.reply(`is already not an admin for tournament **${name}**.`);
+                    await interaction.editReply(`<@${user.id}> is already not an admin for tournament **${name}**.`); break;
+                case tournamentErrorType.NO_ADMIN_PERMISSION:
+                    await interaction.reply(`You do not have permission to run this command (must be an admin).`); break;
+                case tournamentErrorType.COLLECTOR_TIMEOUT:
+                    await interaction.reply({ content: `The command has timed out.`, components: [] }); break;
+                default:
+                    await interaction.reply(defaultMessage);
+            }
+        } catch (newErr: Error | any) {
+            if (newErr.name === `[INTERACTION_ALREADY_REPLIED]`) {
+                switch (err.message) {
+                    case tournamentErrorType.DUPLICATE_TOURNAMENT:
+                        await await interaction.editReply(`Duplicate ID error: Tournament with ID **${name}** already exists. Please choose a different name.`); break;
+                    case tournamentErrorType.UPDATE_COND_FAIL:
+                        await interaction.editReply(`The service for tournament **${name}** is overwhelmed right now. Please try again in a couple seconds.`); break;
+                    case tournamentErrorType.NO_TOURNAMENT:
+                        await interaction.editReply(`There is no tournament with id **${name}**. Please check the name again (case-sensitive).`); break;
+                    case tournamentErrorType.NO_SUMMONER_NAME:
+                        await interaction.editReply(`<@${user.id}> has not set a summoner name. Please set a summoner name with \`user set <summoner_name>\`.`); break;
+                    case tournamentErrorType.ALREADY_REGISTERED:
+                        await interaction.editReply(`<@${user.id}> is already registered for tournament **${name}**.`); break;
+                    case tournamentErrorType.NOT_REGISTERED:
+                        await interaction.editReply(`<@${user.id}> is already not registered for tournament **${name}**.`); break;
+                    case tournamentErrorType.ALREADY_ADMIN:
+                        await interaction.editReply(`<@${user.id}> is already an admin for tournament **${name}**.`); break;
+                    case tournamentErrorType.NOT_ADMIN:
+                        await interaction.editReply(`<@${user.id}> is already not an admin for tournament **${name}**.`); break;
+                    case tournamentErrorType.NO_ADMIN_PERMISSION:
+                        await interaction.editReply(`You do not have permission to run this command (must be an admin).`); break;
+                    case tournamentErrorType.COLLECTOR_TIMEOUT:
+                        await interaction.editReply({ content: `The command has timed out.`, components: [] }); break;
+                    default:
+                        await interaction.editReply(defaultMessage);
+                }
+            } else {
+                console.log(`Error in translate tournamentErrorTypeToInteractionReply: ${newErr}`);
+            }
         }
     }
 }

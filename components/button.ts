@@ -19,7 +19,7 @@ export class Button {
      * @returns Unregister button component.
      */
     static unregisterButton(id: string): MessageButton {
-        let button = new MessageButton()
+        const button = new MessageButton()
             .setLabel("Unregister")
             .setEmoji("❌")
             .setStyle("SECONDARY")
@@ -37,11 +37,27 @@ export class Button {
     }
 
     static cancelButton(): MessageButton {
-        let button = new MessageButton()
+        const button = new MessageButton()
             .setLabel("Cancel")
             .setEmoji("↪️")
             .setStyle("SECONDARY")
             .setCustomId(`cancel-btn`);
+        return button;
+    }
+
+    static forwardButton(): MessageButton {
+        const button = new MessageButton()
+            .setEmoji("➡️")
+            .setStyle("PRIMARY")
+            .setCustomId(`forward-btn`);
+        return button;
+    }
+
+    static backButton(): MessageButton {
+        const button = new MessageButton()
+            .setEmoji("⬅️")
+            .setStyle("PRIMARY")
+            .setCustomId(`back-btn`);
         return button;
     }
 }

@@ -1,10 +1,11 @@
 import { DatabaseAPI } from "../api/db.js";
 import { Helper } from "../api/helper.js";
-import { Client, CommandInteraction, User } from "discord.js";
+import { Client, CommandInteraction, GuildMember, User } from "discord.js";
 import { Discord, SimpleCommand, SimpleCommandMessage, Slash, SlashGroup, SlashOption } from "discordx";
 import { RiotAPI } from "../api/riot.js";
 import { Translate } from "../api/translate.js";
 import { Embed } from "../components/embed.js";
+import { updateType } from "../types/enums.js";
 
 @Discord()
 @SlashGroup("user", "Edit user information")
@@ -22,7 +23,8 @@ export class UserCommands {
                 id: interaction.user.id,
                 avatar: interaction.user.avatar,
                 username: interaction.user.username,
-                summonerId: summonerInfo.id
+                summonerId: summonerInfo.id,
+                summonerName: summonerInfo.summonerName
             });
             await interaction.reply(`Your summoner has been successfully set to **${summonerInfo.summonerName}**!`);
         } catch (err) {
@@ -38,10 +40,10 @@ export class UserCommands {
             type: "USER",
             required: false
         })
-        user: User,
+        member: GuildMember,
         interaction: CommandInteraction
     ) {
-        if (!user) user = interaction.user;
+        const user: User = (!member) ? interaction.user : member.user;
         console.log(`\nCOMMAND: Refreshing info for ${user.username}...`);
         try {
             const userInfo = await DatabaseAPI.getUser(user.id);
@@ -53,6 +55,17 @@ export class UserCommands {
                 const summonerInfo = await DatabaseAPI.getSummoner(userInfo.summonerId);
                 const summonerItem = Translate.riotToSummonerDB(summonerInfo, leagueInfo);
                 await DatabaseAPI.putSummoner(summonerItem);
+                if (summonerItem.summonerName !== summonerInfo.summonerName) {
+                    const updateExpressionArray = Translate.updateExpressionsToUpdateExpressionArray(
+                        updateType.SET,
+                        `summonerName`,
+                        summonerItem.summonerName,
+                        updateType.COND,
+                        userInfo.summonerName,
+                        false
+                    )
+                    await DatabaseAPI.updateUser(user.id, updateExpressionArray);
+                }
                 await interaction.reply(`'s info has been refreshed successfully!`);
                 await interaction.editReply(`<@${user.id}>'s info has been refreshed successfully!`);
             }
@@ -66,14 +79,14 @@ export class UserCommands {
     @Slash("info", { description: "Get the info of a user."})
     async rank(
         @SlashOption("user", {
-            description: "User info to get. Leave blank to get your own.",
+            description: "Member info to get. Leave blank to get your own.",
             type: "USER",
             required: false
         })
-        user: User,
+        member: GuildMember,
         interaction: CommandInteraction
     ) {
-        if (!user) user = interaction.user;
+        const user: User = (!member) ? interaction.user : member.user;
         console.log(`\nCOMMAND: Getting info for ${user.username}...`);
         try {
             const userInfo = await DatabaseAPI.getUser(user.id);

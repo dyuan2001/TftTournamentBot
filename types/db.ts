@@ -3,6 +3,7 @@ type userDB = {
     avatar?: string | null
     username?: string
     summonerId?: string
+    summonerName?: string
 }
 
 type summonerDB = {
@@ -29,6 +30,11 @@ type updateFormat = {
     expressionAttributeNames: any
     expressionAttributeValues: any
     conditionalExpression: string
+}
+
+type batchGetExpression = {
+    pk: string
+    table: string
 }
 
 type participantInfo = { // mapped to Discord Snowflake

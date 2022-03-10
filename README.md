@@ -1,5 +1,5 @@
 # TFT Tournament Bot - built by @dyuan2001
-This bot assists in running tournament seamlessly, with minimal input from admins.\
+This bot runs tournaments seamlessly with minimal input from admins.\
 Tournaments are easy to set up, create, and maintain.\
 Manual override features are available if case-by-case actions are needed.
 
