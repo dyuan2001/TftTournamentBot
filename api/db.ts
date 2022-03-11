@@ -217,16 +217,20 @@ export class DatabaseAPI {
      * @returns Promise for array of userDBs matching the user ids.
      */
     static async batchGetUsers(users: string[]): Promise<userDB[]> {
-        let userExpressions: batchGetExpression[] = [];
-        for (const user of users) {
-            userExpressions.push({ 
-                pk: user,
-                table: 'discord-user-table'
-            });
-        }
+        let userDBArray: userDB[] = [];
+        for (let i = 0; i < users.length; i += 100) {
+            let userExpressions: batchGetExpression[] = [];
+            for (const user of users) {
+                userExpressions.push({ 
+                    pk: user,
+                    table: 'discord-user-table'
+                });
+            }
 
-        const responses = await this.batchGet(userExpressions);
-        const userDBArray: userDB[] = Translate.batchGetResponsesToOneDBObject(responses, 'discord-user-table');
+            const responses = await this.batchGet(userExpressions);
+            const batchUserDBArray: userDB[] = Translate.batchGetResponsesToOneDBObject(responses, 'discord-user-table');
+            userDBArray.push(...batchUserDBArray);
+        }
         return userDBArray;
     }
 
