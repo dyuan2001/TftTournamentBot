@@ -10,6 +10,11 @@ import { updateType } from "../types/enums.js";
 @Discord()
 @SlashGroup("user", "Edit user information")
 export class UserCommands {
+    /*
+        user set
+        user refresh
+        user info
+    */
     @Slash("set", { description: "Set your TFT summoner name."})
     async set(
         @SlashOption("summoner", { description: "Your TFT summoner name."})

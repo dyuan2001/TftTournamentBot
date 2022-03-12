@@ -10,6 +10,17 @@ import { Button } from "../components/button.js";
 @Discord()
 @SlashGroup("tournament", "Tournament creation, registration, and other commands.")
 export class TournamentCommands {
+    /*
+        tournament create
+        tournament delete
+        tournament setdescription
+        tournament info
+        tournament participants
+        tournament register
+        tournament unregister
+        tournament addadmin
+        tournament removeadmin
+    */
     @Slash("create", { description: "Create a tournament." })
     async create(
         @SlashOption("name", { description: "Tournament name (must be unique)."})
