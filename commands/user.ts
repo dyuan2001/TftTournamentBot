@@ -8,7 +8,7 @@ import { Embed } from "../components/embed.js";
 import { updateType } from "../types/enums.js";
 
 @Discord()
-@SlashGroup("user", "Edit user information")
+@SlashGroup("user", "Edit user information.")
 export class UserCommands {
     /*
         user set

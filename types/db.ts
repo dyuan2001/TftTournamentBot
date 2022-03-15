@@ -19,6 +19,23 @@ type summonerDB = {
     losses?: number
 }
 
+type snapshotDB = {
+    id: string
+    ttl: number
+    description?: string
+    admins: string[]
+    participants: string[]
+    crons: cronExpression[]
+}
+
+type cronExpression = {
+    startDay: Date
+    dayOfTheWeek?: string
+    granularity: number
+    interval: number
+    jobs?: string[]
+}
+
 type updateExpression = {
     type: number,
     variable?: string,
