@@ -5,13 +5,14 @@ import { Discord, Slash, SlashGroup, SlashOption } from "discordx";
 @SlashGroup("snapshot", "Snapshot configuration, registration, and more.")
 export class SnapshotCommands {
     /*
-    snapshot create
-    snapshot delete
-    snapshot register
-    snapshot unregister
-    snapshot leaderboard
-    snapshot schedule
-    snapshot cancel
+    List of commands:
+        snapshot create
+        snapshot delete
+        snapshot register
+        snapshot unregister
+        snapshot leaderboard
+        snapshot schedule
+        snapshot cancel
     */
 
     @Slash("create", { description: "Create a snapshot leaderboard." })
@@ -27,6 +28,7 @@ export class SnapshotCommands {
         try {
             
         } catch (err) {
+            console.log(`Error in snapshot create: ${err}`);
 
         }
     }

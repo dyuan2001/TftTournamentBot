@@ -29,7 +29,6 @@ export class Embed {
             )
             .setTimestamp()
             .setFooter({ text: `Built by @dyuan2001 on GitHub.`, iconURL: 'attachment://esportsLogo.png' });
-        console.log(`https://cdn.discordapp.com/avatars/${user.id}/${user.avatar}.png`);
         return embed;
     }
 

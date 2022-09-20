@@ -3,6 +3,7 @@
         "module": "ESNext",
         "target": "ESNext",
         "jsx": "preserve",
+        "outDir": "build",
         "strictFunctionTypes": true,
         "sourceMap": true,
         "moduleResolution": "Node",

@@ -31,8 +31,7 @@ Admins are able to remake the lobbies if desired and move players to different l
   - `tm makeround`: Starts with settings specified for round. Prints out settings for that round for "are you sure?". Admin
   - `tm deleteround`: Deletes a round and goes back to phase 3. Does not reset the number "are you sure? like really sure". Really shouldn't be used. Admin
   - `tm remakelobbies`: Remakes the lobbies with the specified settings. Admin // CAN'T USE AFTER PHASE 3
-  - `tm addplayer`: Adds player to a particular lobby. Must not be in a lobby already (marks in user info as present). Admin
-  - `tm removeplayer`: Removes player from a particular lobby. Must be in that lobby. Admin
+  - `tm move`: Moves player to a particular lobby and removes from previous lobby if applicable. Admin
   - `tm addcoordinator`: Add an individual as a coordinator for their lobby. Admin.
   - `tm removecoordinator`: Remove an individual as a coordinator for their lobby. Admin.
   - `tm roundinfo`: Shows settings for round, description, and general points distribution.
