@@ -5,6 +5,7 @@
     "@discordx/pagination": "^1.1.0",
     "@discordx/utilities": "^3.3.0",
     "aws-sdk": "^2.1087.0",
+    "bree": "^9.1.2",
     "discord.js": "^13.6.0",
     "discordx": "^9.1.12",
     "dotenv": "^14.1.0",

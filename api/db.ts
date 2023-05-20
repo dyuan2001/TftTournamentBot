@@ -107,6 +107,27 @@ export class DatabaseAPI {
     }
 
     /**
+     * Generic scanAll helper function.
+     * @param table Table for scanAll function.
+     * @returns Promise for all items.
+     */
+    static async scanAll(table: string): Promise<any> {
+        const params = {
+            TableName: table
+        }
+
+        console.log(`Scanning objects from table ${table}`)
+        try {
+            const data = await this.docClient.scan(params).promise()
+            return data.Items
+        } catch (err: AWSError | any) {
+            const error = err.message
+            console.log(`Error in scanAll: ${error}`)
+            return Promise.reject(error)
+        }
+    }
+
+    /**
      * Generic delete helper function.
      * @param pk Primary key for deletion.
      * @param table Table for delete function.
@@ -157,6 +178,16 @@ export class DatabaseAPI {
     static async putTournament(tournament: tournamentDB): Promise<tournamentDB> {
         const item: tournamentDB = await this.put(tournament, 'tournament-table');
         return item;
+    }
+
+    /**
+     * Put snapshot into table snapshot-table.
+     * @param snapshot snapshotDB object to be put.
+     * @returns Promise for snapshot object defined by the parameters.
+     */
+    static async putSnapshot(snapshot: snapshotDB): Promise<snapshotDB> {
+        const item: snapshotDB = await this.put(snapshot, 'snapshot-table')
+        return item
     }
 
     /**
@@ -212,6 +243,16 @@ export class DatabaseAPI {
     }
 
     /**
+     * Get snapshot from table snapshot-table.
+     * @param id Unique snapshot id.
+     * @returns Promise for snapshotDB object matching id.
+     */
+    static async getSnapshot(id: string): Promise<snapshotDB> {
+        const item: snapshotDB = await this.get(id, 'snapshot-table')
+        return item
+    }
+
+    /**
      * BatchGet users from table discord-user-table.
      * @param users Array of Discord user ids.
      * @returns Promise for array of userDBs matching the user ids.
@@ -232,6 +273,13 @@ export class DatabaseAPI {
             userDBArray.push(...batchUserDBArray);
         }
         return userDBArray;
+    }
+    
+    static async scanAllSnapshots(): Promise<snapshotDB[]> {
+        const items = await this.scanAll('snapshot-table')
+        const snapshotDBArray: snapshotDB[] = Translate.scanAllItemsToOneDBObject(items)
+
+        return snapshotDBArray
     }
 
     /**

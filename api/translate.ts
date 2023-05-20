@@ -153,6 +153,16 @@ export class Translate {
         return dbObjectArray;
     }
 
+    static scanAllItemsToOneDBObject(items: AWS.DynamoDB.DocumentClient.ItemList): any {
+        let dbObjectArray: any = []
+
+        for (const obj of items) {
+            dbObjectArray.push(obj)
+        }
+
+        return dbObjectArray
+    }
+
     /**
      * Translates an error message to a interaction reply.
      * @param err Error thrown.

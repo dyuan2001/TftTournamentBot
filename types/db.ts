@@ -25,15 +25,15 @@ type snapshotDB = {
     description?: string
     admins: string[]
     participants: string[]
-    crons: cronExpression[]
+    jobs: job[]
 }
 
-type cronExpression = {
-    startDay: Date
-    dayOfTheWeek?: string
-    granularity: number
-    interval: number
-    jobs?: string[]
+type job = {
+    name: string
+    path: string
+    interval: string
+    startDate: Date
+    endDate: Date
 }
 
 type updateExpression = {
