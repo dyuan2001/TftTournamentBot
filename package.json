@@ -15,5 +15,9 @@
   },
   "devDependencies": {
     "@types/node": "^17.0.21"
+  },
+  "scripts": {
+    "build": "npx tsc",
+    "start": "node build/index"
   }
 }
